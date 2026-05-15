@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { bookingService } from "@/services/bookingService";
 import { MapPin, Calendar, Clock, ArrowLeft, Loader2, CheckCircle2 } from "lucide-react";
@@ -8,7 +8,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { useSearchParams } from "next/navigation";
 
-export default function BookingsPage() {
+function BookingsContent() {
   const { user, isLoading: authLoading } = useAuth();
   const searchParams = useSearchParams();
   const isSuccess = searchParams.get("success");
@@ -127,5 +127,17 @@ export default function BookingsPage() {
         )}
       </main>
     </div>
+  );
+}
+
+export default function BookingsPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    }>
+      <BookingsContent />
+    </Suspense>
   );
 }

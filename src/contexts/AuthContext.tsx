@@ -50,20 +50,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        if (session?.user) {
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', session.user.id)
-            .single();
-          setProfile(profile);
-        } else {
-          setProfile(null);
+        try {
+          setSession(session);
+          setUser(session?.user ?? null);
+          
+          if (session?.user) {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('id', session.user.id)
+              .single();
+            setProfile(profile);
+          } else {
+            setProfile(null);
+          }
+        } catch (error) {
+          console.error("Error in onAuthStateChange:", error);
+        } finally {
+          setIsLoading(false);
         }
-        setIsLoading(false);
       }
     );
 

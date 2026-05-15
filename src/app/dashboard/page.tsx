@@ -183,7 +183,7 @@ export default function Dashboard() {
           <MapView 
             spaces={spaces} 
             selectedSpaceId={selectedSpaceId}
-            onMarkerClick={(space) => router.push(`/space/${space.id}`)}
+            onMarkerClick={(space: ParkingSpace) => router.push(`/space/${space.id}`)}
           />
         </div>
       </main>

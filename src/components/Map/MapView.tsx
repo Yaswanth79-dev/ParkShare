@@ -3,8 +3,8 @@
 import dynamic from "next/dynamic";
 import { Loader2 } from "lucide-react";
 
-// Dynamically import the leaflet component so it only renders on client
-const OSMMapView = dynamic(() => import("./OSMMapView"), {
+// Dynamically import the GoogleMapView component so it only renders on client
+const GoogleMapView = dynamic(() => import("./GoogleMapView"), {
   ssr: false,
   loading: () => (
     <div className="w-full h-full flex items-center justify-center bg-gray-50">
@@ -14,5 +14,5 @@ const OSMMapView = dynamic(() => import("./OSMMapView"), {
 });
 
 export default function MapView(props: any) {
-  return <OSMMapView {...props} />;
+  return <GoogleMapView {...props} />;
 }

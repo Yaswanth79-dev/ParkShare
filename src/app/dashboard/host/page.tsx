@@ -22,7 +22,7 @@ export default function HostOnboarding() {
     address: "",
     city: "",
     price_per_hour: "",
-    vehicle_type: "both",
+    vehicle_type: "both" as "2-wheeler" | "4-wheeler" | "both",
     latitude: 0,
     longitude: 0
   });
@@ -127,7 +127,7 @@ export default function HostOnboarding() {
               <h3 className="text-xl font-bold text-gray-900 border-b border-gray-100 pb-2">Pin Exact Location</h3>
               <p className="text-sm text-gray-500">Drag the pin to the exact location of your parking space, or search for it.</p>
               <DraggableMap 
-                onLocationSelect={(lat, lng, address, city) => {
+                onLocationSelect={(lat: number, lng: number, address: string, city: string) => {
                   setFormData(prev => ({
                     ...prev,
                     latitude: lat,
@@ -187,7 +187,7 @@ export default function HostOnboarding() {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Suitable For</label>
                 <div className="flex gap-4">
-                  {['2-wheeler', '4-wheeler', 'both'].map((type) => (
+                  {(['2-wheeler', '4-wheeler', 'both'] as const).map((type) => (
                     <button
                       key={type}
                       type="button"

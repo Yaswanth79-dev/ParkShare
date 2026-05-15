@@ -18,6 +18,22 @@ export const parkingService = {
   },
 
   async getParkingSpaceById(id: string) {
+    if (id === "mock_bahadurpally_1" || id === "b0000000-0000-0000-0000-000000000000") {
+      return {
+        id: "b0000000-0000-0000-0000-000000000000",
+        title: "Bahadurpally Secure Parking",
+        address: "2-31/5/A, Bahadurpally, Dundigal-Gandimaisamma",
+        city: "Hyderabad",
+        latitude: 17.5597,
+        longitude: 78.4388,
+        price_per_hour: 40,
+        is_verified: true,
+        vehicle_type: "both",
+        description: "A secure, verified parking space in Bahadurpally. Available for instant booking.",
+        parking_images: [{ image_url: "https://images.unsplash.com/photo-1590674899484-d5640e854abe?q=80&w=1200&auto=format&fit=crop" }],
+        profiles: { full_name: "Mock Host", avatar_url: null }
+      };
+    }
     const { data, error } = await supabase
       .from('parking_spaces')
       .select('*, profiles(full_name, avatar_url), parking_images(image_url)')

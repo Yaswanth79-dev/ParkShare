@@ -8,6 +8,7 @@ import { bookingService } from "@/services/bookingService";
 import { MapPin, ArrowLeft, Star, Clock, ShieldCheck, Car, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import Script from "next/script";
 
 export default function SpaceDetail({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
@@ -53,20 +54,70 @@ export default function SpaceDetail({ params }: { params: Promise<{ id: string }
     try {
       const startTime = new Date();
       const endTime = new Date(startTime.getTime() + hours * 60 * 60 * 1000);
-      const totalPrice = space.price_per_hour * hours;
+      const totalAmount = (space.price_per_hour * hours) + 10; // +10 platform fee
 
-      await bookingService.createBooking({
-        parking_id: space.id,
-        user_id: user.id,
-        booking_start: startTime.toISOString(),
-        booking_end: endTime.toISOString(),
-        total_price: totalPrice,
-        booking_status: 'confirmed'
+      // 1. Create Razorpay Order
+      const response = await fetch('/api/razorpay', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ amount: totalAmount }),
       });
 
-      router.push('/dashboard/bookings?success=true');
+      const orderData = await response.json();
+
+      if (!response.ok) {
+        throw new Error(orderData.error || 'Failed to initialize payment');
+      }
+
+      // 2. Open Razorpay Checkout Modal
+      const options = {
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "rzp_test_dummykey",
+        amount: orderData.amount,
+        currency: orderData.currency,
+        name: "ParkShare India",
+        description: `Booking: ${space.title}`,
+        order_id: orderData.id,
+        handler: async function (response: any) {
+          // 3. Payment Successful -> Create Booking in Database
+          try {
+            await bookingService.createBooking({
+              parking_id: space.id,
+              user_id: user.id,
+              booking_start: startTime.toISOString(),
+              booking_end: endTime.toISOString(),
+              total_price: totalAmount,
+              booking_status: 'confirmed'
+            });
+
+            router.push('/dashboard/bookings?success=true');
+          } catch (err: any) {
+             console.error("Booking creation failed:", err);
+             // Note: In production, you would handle edge cases where payment succeeds but DB insert fails
+             alert("Payment successful but failed to save booking. Please contact support.");
+          }
+        },
+        prefill: {
+          name: user.user_metadata?.full_name || "User",
+          email: user.email || "",
+        },
+        theme: {
+          color: "#0f172a", // primary color
+        },
+      };
+
+      const rzp = new (window as any).Razorpay(options);
+      
+      rzp.on('payment.failed', function (response: any){
+         setError("Payment failed: " + response.error.description);
+      });
+
+      rzp.open();
+      
     } catch (err: any) {
-      setError(err.message || "Failed to confirm booking");
+      setError(err.message || "Failed to initiate booking");
+    } finally {
       setBookingLoading(false);
     }
   };
@@ -90,6 +141,7 @@ export default function SpaceDetail({ params }: { params: Promise<{ id: string }
 
   return (
     <div className="min-h-screen bg-background pb-20">
+      <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
       {/* Header */}
       <nav className="bg-white border-b border-gray-100 sticky top-0 z-10">
         <div className="max-w-5xl mx-auto px-4 h-16 flex items-center">
@@ -119,10 +171,7 @@ export default function SpaceDetail({ params }: { params: Promise<{ id: string }
               {space.parking_images && space.parking_images.length > 0 ? (
                 <img src={space.parking_images[0].image_url} alt="Parking space" className="w-full h-full object-cover" />
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-gray-400 flex-col gap-2">
-                  <MapPin className="w-12 h-12" />
-                  <span>No images provided</span>
-                </div>
+                <img src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1200&q=80" alt="Default parking space" className="w-full h-full object-cover" />
               )}
             </div>
 
