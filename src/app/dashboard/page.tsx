@@ -31,6 +31,11 @@ export default function Dashboard() {
     if (authLoading || !user) return;
     
     async function fetchSpaces() {
+      // Safety timeout: if the network request hangs, unlock the UI after 5 seconds
+      const timeoutId = setTimeout(() => {
+        if (isMounted) setLoading(false);
+      }, 5000);
+
       try {
         setLoading(true);
         const data = await parkingService.getParkingSpaces();
@@ -38,6 +43,7 @@ export default function Dashboard() {
       } catch (err) {
         console.error("Failed to fetch spaces:", err);
       } finally {
+        clearTimeout(timeoutId);
         if (isMounted) setLoading(false);
       }
     }

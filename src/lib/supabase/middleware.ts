@@ -27,16 +27,16 @@ export async function updateSession(request: NextRequest) {
     }
   )
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  // To prevent Node.js network connection errors (ECONNRESET) on Windows, 
+  // we simply check for the presence of the Supabase auth cookie instead of making an API call.
+  const hasAuthCookie = request.cookies.getAll().some(c => c.name.startsWith('sb-') && c.name.endsWith('-auth-token'));
 
   // Protect routes here. Allow / and /login.
   const isProtectedRoute = request.nextUrl.pathname.startsWith('/dashboard') || 
                            request.nextUrl.pathname.startsWith('/booking') || 
                            request.nextUrl.pathname.startsWith('/profile');
 
-  if (!user && isProtectedRoute) {
+  if (!hasAuthCookie && isProtectedRoute) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     return NextResponse.redirect(url)

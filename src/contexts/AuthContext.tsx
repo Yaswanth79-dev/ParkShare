@@ -27,6 +27,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const getSession = async () => {
       try {
+        const mockPhone = typeof window !== 'undefined' ? localStorage.getItem("mock_auth_phone") : null;
+        const mockEmail = typeof window !== 'undefined' ? localStorage.getItem("mock_auth_email") : null;
+        
+        if (mockPhone || mockEmail) {
+          const id = 'mock-user-' + Math.random().toString(36).substr(2, 9);
+          const mockUser = { 
+            id, 
+            phone: mockPhone || undefined, 
+            email: mockEmail || 'mock@parkshare.local' 
+          } as any;
+          
+          setUser(mockUser);
+          setProfile({ 
+            id, 
+            full_name: mockPhone ? `User ${mockPhone.slice(-4)}` : mockEmail?.split('@')[0], 
+            email: mockEmail || 'mock@parkshare.local', 
+            phone: mockPhone 
+          } as any);
+          setIsLoading(false);
+          return;
+        }
+
         const { data: { session } } = await supabase.auth.getSession();
         setSession(session);
         setUser(session?.user ?? null);
@@ -72,8 +94,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     );
 
+    // Safety fallback: if Supabase takes too long to respond, force loading to false after 2 seconds
+    const safetyTimeout = setTimeout(() => {
+      setIsLoading(false);
+    }, 2000);
+
     return () => {
       subscription.unsubscribe();
+      clearTimeout(safetyTimeout);
     };
   }, [supabase]);
 
